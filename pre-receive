@@ -2,6 +2,7 @@
 import re
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
 
@@ -104,6 +105,13 @@ def check_push(lines):
             check_branch_name(refname)
             for commit_hash in get_revisions(oldrev, newrev):
                 check_commit_message(commit_hash)
+                lint_revision_source_code(commit_hash)
+
+
+def lint_revision_source_code(commit_hash):
+    with TemporaryDirectory() as tmpdir:
+        run('git archive {} {}'.format(commit_hash, tmpdir))
+        run('cd {} && /usr/bin/env flake8'.format(tmpdir))
 
 
 def main():
