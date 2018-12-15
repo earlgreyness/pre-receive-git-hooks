@@ -85,7 +85,7 @@ def check_commit_message(commit_hash):
     first_character = subject_line[0]
     check(first_character.isalpha(), RULE_3)
     check(first_character == first_character.upper(), RULE_3)
-    check(subject_line[-1].isalnum(), RULE_4)
+    check(subject_line[-1].isalnum() or subject_line[-1] == ')', RULE_4)
     check(len(subject_line.split()) > 1, RULE_10)
 
     if len(lines) > 2:
