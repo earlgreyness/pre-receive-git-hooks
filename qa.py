@@ -60,14 +60,14 @@ def check_branch_name(branch_name):
 
     if not is_ascii(branch_name):
         raise Error(
-            'Branch name error ({}): Use only ascii characters'
+            'Bad branch name ({}): Use only ascii characters'
             .format(branch_name)
         )
 
     branch_name_re = r'^[a-z]{1}[-a-z0-9/.]+[a-z0-9]{1}$'
     if not re.match(branch_name_re, branch_name):
         raise Error(
-            'Branch name error ({}): Match the regex {!r}'
+            'Bad branch name ({}): Match the regex {!r}'
             .format(branch_name, branch_name_re)
         )
 
@@ -89,7 +89,7 @@ def check_commit_message(commit_hash):
 
     def check(condition, message):
         if not condition:
-            raise Error('Commit message error ({}): {}'.format(
+            raise Error('Bad commit message ({}): {}'.format(
                 commit_hash[:8], message))
 
     check(is_ascii(commit_message), 'Use only ascii characters')
@@ -105,9 +105,6 @@ def check_commit_message(commit_hash):
 
     check(subject_line, RULE_9)
 
-    first_char = subject_line[0]
-    check(first_char.isalpha() and first_char == first_char.upper(), RULE_3)
-
     if not is_merge_commit:
         check(len(subject_line) <= 50, RULE_2)
         check(subject_line[-1].isalnum(), RULE_4)
@@ -117,8 +114,11 @@ def check_commit_message(commit_hash):
             'Subject line for merge commits must match regex {!r}'
             .format(MERGE_COMMIT_SUBJECT_RE)
         )
-    check(len(subject_line.split()) > 1, RULE_10)
-    check(is_imperative(subject_line.split()[0]), RULE_5)
+
+    words = subject_line.split()
+    check(words[0].isalpha() and words[0].capitalize() == words[0], RULE_3)
+    check(is_imperative(words[0]), RULE_5)
+    check(len(words) > 1, RULE_10)
 
     if len(lines) > 2:
         check(not lines[1].strip(), RULE_1)
@@ -149,7 +149,7 @@ def lint_revision_source_code(commit_hash):
             run('flake8 {}'.format(tmpdir))
         except subprocess.CalledProcessError as err:
             log(err.output)
-            raise Error(str(err))
+            raise Error('Python linter flake8 found errors')
 
 
 def main():
