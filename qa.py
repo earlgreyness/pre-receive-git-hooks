@@ -8,8 +8,8 @@ ZERO_COMMIT = '0' * 40
 MERGE_COMMIT_SUBJECT_RE = r"^Merge branch '[-a-z0-9/.]+' into '[-a-z0-9/.]+'$"
 
 
-def log(message):
-    print(message, file=sys.stderr, flush=True)
+def log(*messages):
+    print(*messages, file=sys.stderr, flush=True)
 
 
 def is_ascii(text):
@@ -42,17 +42,9 @@ def is_imperative(word):
     return run('wordpos -vb get {}'.format(word)).strip() == word
 
 
-def get_revisions(old, new):
-    assert is_sha1(old)
-    assert is_sha1(new)
-
-    if old == ZERO_COMMIT:
-        return run(
-            r"git rev-list {0} --not "
-            r"$(git for-each-ref refs/heads/ --format='%(refname)' "
-            r"| grep -v ^{0}\$)".format(new)
-        ).splitlines()
-    return run('git rev-list {}..{}'.format(old, new)).splitlines()
+def get_revisions(commit_hash):
+    assert is_sha1(commit_hash)
+    return run('git rev-list {} --not --all'.format(commit_hash)).splitlines()
 
 
 def check_branch_name(branch_name):
@@ -134,7 +126,7 @@ def check_push(lines):
         # Other possibilities: "refs/tags/" and "refs/notes/".
         if refname.startswith('refs/heads/'):
             check_branch_name(refname)
-            for commit_hash in get_revisions(oldrev, newrev):
+            for commit_hash in get_revisions(newrev):
                 check_commit_message(commit_hash)
                 lint_revision_source_code(commit_hash)
 
