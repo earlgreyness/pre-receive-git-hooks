@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import re
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
+
+
+def log(message):
+    print(message, file=sys.stderr, flush=True)
 
 
 def run(command):
@@ -110,18 +114,28 @@ def check_push(lines):
 
 def lint_revision_source_code(commit_hash):
     with TemporaryDirectory() as tmpdir:
-        run('git archive {} {}'.format(commit_hash, tmpdir))
-        run('cd {} && /usr/bin/env flake8'.format(tmpdir))
+        run(
+            'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
+            .format(commit_hash, tmpdir)
+        )
+        try:
+            run('cd {} && /usr/local/bin/flake8'.format(tmpdir))
+        except subprocess.CalledProcessError as err:
+            log(err.output)
+            raise Error(str(err))
 
 
 def main():
     lines = [tuple(x.split()) for x in sys.stdin]
 
+    log('=' * 80)
     try:
         check_push(lines)
     except Error as err:
-        print(err, file=sys.stderr, flush=True)
+        log(err)
         return 1
+    finally:
+        log('=' * 80)
     return 0
 
 
