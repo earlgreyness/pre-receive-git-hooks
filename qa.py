@@ -12,6 +12,10 @@ def log(message):
     print(message, file=sys.stderr, flush=True)
 
 
+def is_ascii(text):
+    return all(ord(x) < 128 for x in text)
+
+
 def run(command):
     return subprocess.check_output(
         command,
@@ -53,13 +57,18 @@ def get_revisions(old, new):
 
 def check_branch_name(branch_name):
     branch_name = branch_name.split('refs/heads/', 1)[-1]
-    if not re.match(r'^[a-z]{1}[-a-z0-9/.]+[a-z0-9]{1}$', branch_name):
+
+    if not is_ascii(branch_name):
         raise Error(
-            "Blocking creation of new branch {} because it must only contain "
-            "lower-case alpha-numeric characters, '-' or '/', "
-            "start with letter and end with letter or digit "
-            "and have length of at least 3 characters"
+            'Branch name error ({}): Use only ascii characters'
             .format(branch_name)
+        )
+
+    branch_name_re = r'^[a-z]{1}[-a-z0-9/.]+[a-z0-9]{1}$'
+    if not re.match(branch_name_re, branch_name):
+        raise Error(
+            'Branch name error ({}): Match the regex {!r}'
+            .format(branch_name, branch_name_re)
         )
 
 
@@ -82,6 +91,8 @@ def check_commit_message(commit_hash):
         if not condition:
             raise Error('Commit message error ({}): {}'.format(
                 commit_hash[:8], message))
+
+    check(is_ascii(commit_message), 'Use only ascii characters')
 
     lines = [x for x in commit_message.splitlines() if not x.startswith('#')]
 
