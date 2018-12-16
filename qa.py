@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import re
 import subprocess
 import sys
@@ -119,7 +119,7 @@ def lint_revision_source_code(commit_hash):
             .format(commit_hash, tmpdir)
         )
         try:
-            run('cd {} && /usr/local/bin/flake8'.format(tmpdir))
+            run('flake8 {}'.format(tmpdir))
         except subprocess.CalledProcessError as err:
             log(err.output)
             raise Error(str(err))
