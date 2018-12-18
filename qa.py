@@ -5,7 +5,8 @@ import sys
 from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
-MERGE_COMMIT_SUBJECT_RE = r"^Merge branch '[-a-z0-9/.]+' into '[-a-z0-9/.]+'$"
+MERGE_COMMIT_SUBJECT_RE = \
+    r"^Merge branch '[-a-z0-9/.]+'[-a-z0-9/.: ]* into '[-a-z0-9/.]+'$"
 
 
 def log(*messages):
@@ -128,20 +129,20 @@ def check_push(lines):
             check_branch_name(refname)
             for commit_hash in get_revisions(newrev):
                 check_commit_message(commit_hash)
-                lint_revision_source_code(commit_hash)
+                with TemporaryDirectory() as tmpdir:
+                    run(
+                        'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
+                        .format(commit_hash, tmpdir)
+                    )
+                    lint_python_code(tmpdir)
 
 
-def lint_revision_source_code(commit_hash):
-    with TemporaryDirectory() as tmpdir:
-        run(
-            'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
-            .format(commit_hash, tmpdir)
-        )
-        try:
-            run('flake8 {}'.format(tmpdir))
-        except subprocess.CalledProcessError as err:
-            log(err.output)
-            raise Error('Python linter flake8 found errors')
+def lint_python_code(directory):
+    try:
+        run('flake8 {}'.format(directory))
+    except subprocess.CalledProcessError as err:
+        log(err.output)
+        raise Error('Python linter flake8 found errors')
 
 
 def main():
