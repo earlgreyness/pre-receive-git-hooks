@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import re
 import subprocess
 import sys
@@ -6,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
 MERGE_COMMIT_SUBJECT_RE = \
-    r"^Merge branch '[-a-z0-9/.]+'[-a-z0-9/.: ]* into '[-a-z0-9/.]+'$"
+    r"^Merge (commit|branch) '[-a-z0-9/.]'.* into ['-a-z0-9/.]+$"
 
 
 def log(*messages):
@@ -96,7 +97,8 @@ def check_commit_message(commit_hash):
         check(line.rstrip() == line, RULE_8)
 
     subject_line = lines[0]
-    is_merge_commit = 'Merge branch ' in subject_line
+    is_merge_commit = subject_line.startswith('Merge branch ') \
+        or subject_line.startswith('Merge commit ')
 
     check(subject_line, RULE_9)
 
@@ -121,6 +123,10 @@ def check_commit_message(commit_hash):
             check(lines[2].strip(), RULE_1)
 
 
+def is_flake8_enabled(directory):
+    return '.flake8' in os.listdir(directory)
+
+
 def check_push(lines):
     for oldrev, newrev, refname in lines:
         if newrev == ZERO_COMMIT:
@@ -136,10 +142,12 @@ def check_push(lines):
                         'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
                         .format(commit_hash, tmpdir)
                     )
-                    lint_python_code(tmpdir)
+                    if is_flake8_enabled(tmpdir):
+                        lint_python_code(tmpdir)
 
 
 def lint_python_code(directory):
+    log('Running flake8...')
     try:
         run('flake8 {}'.format(directory))
     except subprocess.CalledProcessError as err:
