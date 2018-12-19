@@ -40,6 +40,8 @@ def is_sha1(string):
 
 
 def is_imperative(word):
+    if word == 'Refactor':
+        return True
     return run('wordpos -vb get {}'.format(word)).strip() == word
 
 
