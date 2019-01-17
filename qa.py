@@ -74,7 +74,7 @@ def check_commit_message(commit_hash):
     commit_message = run('git show -s --format=%B {}'.format(commit_hash))
 
     RULE_1 = 'Separate subject from body with a blank line'
-    RULE_2 = 'Limit the subject line to 50 characters'
+    RULE_2 = 'Limit the subject line to 70 characters'
     RULE_3 = 'Capitalize the subject line'
     RULE_4 = 'Do not end the subject line with a period'
     RULE_5 = 'Use the imperative mood in the subject line'
@@ -105,7 +105,7 @@ def check_commit_message(commit_hash):
     check(subject_line, RULE_9)
 
     if not is_merge_commit:
-        check(len(subject_line) <= 50, RULE_2)
+        check(len(subject_line) <= 70, RULE_2)
         check(subject_line[-1].isalnum(), RULE_4)
     else:
         check(
@@ -166,7 +166,8 @@ def run_flake8(directory):
 
 def run_pylint(directory):
     log('Running pylint...')
-    run('cd {} && find . -iname "*.py" | xargs pylint'.format(directory))
+    run('cd {} && find . -iname "*.py" | grep -v venv/ | xargs pylint'
+        .format(directory))
 
 
 def main():
