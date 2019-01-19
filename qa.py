@@ -129,11 +129,6 @@ def is_flake8_enabled(directory):
     return '.flake8' in os.listdir(directory)
 
 
-def is_pylint_enabled(directory):
-    return False
-    return '.pylintrc' in os.listdir(directory)
-
-
 def check_push(lines):
     for oldrev, newrev, refname in lines:
         if newrev == ZERO_COMMIT:
@@ -151,23 +146,15 @@ def check_push(lines):
                     )
                     if is_flake8_enabled(tmpdir):
                         run_flake8(tmpdir)
-                    if is_pylint_enabled(tmpdir):
-                        run_pylint(tmpdir)
 
 
 def run_flake8(directory):
     log('Running flake8...')
     try:
-        run('flake8 {}'.format(directory))
+        run(f'flake8 {directory}')
     except subprocess.CalledProcessError as err:
         log(err.output)
         raise Error('Python linter flake8 found errors')
-
-
-def run_pylint(directory):
-    log('Running pylint...')
-    run('cd {} && find . -iname "*.py" | grep -v venv/ | xargs pylint'
-        .format(directory))
 
 
 def main():

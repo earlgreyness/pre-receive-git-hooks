@@ -9,4 +9,3 @@ flake8-eradicate
 flake8-import-order
 flake8-logging-format
 flake8-quotes
-pylint
