@@ -6,8 +6,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
-MERGE_COMMIT_SUBJECT_RE = \
-    r"^Merge (commit|branch) '[-a-z0-9/.]+'.* into [-a-z0-9/.']+$"
+MERGE_COMMIT_SUBJECT_RE = r"^Merge .+ into [-a-z0-9/.']+$"
 
 
 def log(*messages):
