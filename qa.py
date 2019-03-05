@@ -46,9 +46,10 @@ def is_imperative(word):
 
 
 def get_revisions(commit_hash):
+    """List commit hashes from oldest to latest."""
     assert is_sha1(commit_hash)
     return run(
-        'git rev-list {} --reverse --not --all'.format(commit_hash)
+        f'git rev-list {commit_hash} --reverse --not --all'
     ).splitlines()
 
 
@@ -136,15 +137,17 @@ def check_push(lines):
         # Other possibilities: "refs/tags/" and "refs/notes/".
         if refname.startswith('refs/heads/'):
             check_branch_name(refname)
-            for commit_hash in get_revisions(newrev):
-                check_commit_message(commit_hash)
-                with TemporaryDirectory() as tmpdir:
-                    run(
-                        'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
-                        .format(commit_hash, tmpdir)
-                    )
-                    if is_flake8_enabled(tmpdir):
-                        run_flake8(tmpdir)
+
+            last_commit_hash = get_revisions(newrev)[-1]
+            log(f'Checking latest commit {last_commit_hash}...')
+            check_commit_message(last_commit_hash)
+            with TemporaryDirectory() as tmpdir:
+                run(
+                    'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
+                    .format(last_commit_hash, tmpdir)
+                )
+                if is_flake8_enabled(tmpdir):
+                    run_flake8(tmpdir)
 
 
 def run_flake8(directory):
