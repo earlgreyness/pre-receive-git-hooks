@@ -3,10 +3,9 @@ import os
 import re
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
 
 ZERO_COMMIT = '0' * 40
-MERGE_COMMIT_SUBJECT_RE = r"^Merge .+ into [-a-z0-9/.']+$"
+MERGE_COMMIT_SUBJECT_RE = r"^Merge .+ (into|to) [-a-z0-9/.']+$"
 
 
 def log(*messages):
@@ -125,10 +124,6 @@ def check_commit_message(commit_hash):
             check(lines[2].strip(), RULE_1)
 
 
-def is_flake8_enabled(directory):
-    return '.flake8' in os.listdir(directory)
-
-
 def check_push(lines):
     for oldrev, newrev, refname in lines:
         if newrev == ZERO_COMMIT:
@@ -144,29 +139,13 @@ def check_push(lines):
             last_commit_hash = revisions[-1]
             log(f'Checking latest commit {last_commit_hash}...')
             check_commit_message(last_commit_hash)
-            with TemporaryDirectory() as tmpdir:
-                run(
-                    'GIT_WORK_TREE={1} git archive {0} | tar -x -C {1}'
-                    .format(last_commit_hash, tmpdir)
-                )
-                if is_flake8_enabled(tmpdir):
-                    run_flake8(tmpdir)
-
-
-def run_flake8(directory):
-    log('Running flake8...')
-    try:
-        run(f'flake8 {directory}')
-    except subprocess.CalledProcessError as err:
-        log(err.output)
-        raise Error('Python linter flake8 found errors')
 
 
 def main():
     lines = [tuple(x.split()) for x in sys.stdin]
 
     log('=' * 80)
-    log('CHECKING CODE QUALITY')
+    log('CHECKING COMMIT MESSAGES')
     log('-' * 80)
     code = 0
     try:
