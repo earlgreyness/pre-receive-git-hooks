@@ -132,13 +132,9 @@ def check_push(lines):
         # Other possibilities: "refs/tags/" and "refs/notes/".
         if refname.startswith('refs/heads/'):
             check_branch_name(refname)
-
-            revisions = get_revisions(newrev)
-            if not revisions:
-                continue
-            last_commit_hash = revisions[-1]
-            log(f'Checking latest commit {last_commit_hash}...')
-            check_commit_message(last_commit_hash)
+            for commit_hash in get_revisions(newrev):
+                log(f'Checking commit message for {commit_hash}...')
+                check_commit_message(commit_hash)
 
 
 def main():
