@@ -8,8 +8,8 @@ ZERO_COMMIT = '0' * 40
 MERGE_COMMIT_SUBJECT_RE = r"^Merge .+ (into|to) [-a-z0-9/.']+$"
 
 
-def log(*messages):
-    print(*messages, file=sys.stderr, flush=True)
+def log(message):
+    print(message, file=sys.stderr, flush=True)
 
 
 def is_ascii(text):
@@ -41,7 +41,7 @@ def is_sha1(string):
 def is_imperative(word):
     if word == 'Refactor':
         return True
-    return run('wordpos -vb get {}'.format(word)).strip() == word
+    return run(f'wordpos -vb get {word}').strip() == word
 
 
 def get_revisions(commit_hash):
@@ -57,20 +57,19 @@ def check_branch_name(branch_name):
 
     if not is_ascii(branch_name):
         raise Error(
-            'Bad branch name ({}): Use only ascii characters'
-            .format(branch_name)
+            f'Bad branch name ({branch_name}): Use only ascii characters'
         )
 
     branch_name_re = r'^[a-z]{1}[-a-z0-9/.]+[a-z0-9]{1}$'
     if not re.match(branch_name_re, branch_name):
         raise Error(
-            'Bad branch name ({}): Match the regex {!r}'
-            .format(branch_name, branch_name_re)
+            f'Bad branch name ({branch_name}): '
+            f'Match the regex {branch_name_re!r}'
         )
 
 
 def check_commit_message(commit_hash):
-    commit_message = run('git show -s --format=%B {}'.format(commit_hash))
+    commit_message = run(f'git show -s --format=%B {commit_hash}')
 
     RULE_1 = 'Separate subject from body with a blank line'
     RULE_2 = 'Limit the subject line to 70 characters'
@@ -132,9 +131,10 @@ def check_push(lines):
         # Other possibilities: "refs/tags/" and "refs/notes/".
         if refname.startswith('refs/heads/'):
             check_branch_name(refname)
-            for commit_hash in get_revisions(newrev):
-                log(f'Checking commit message for {commit_hash}...')
-                check_commit_message(commit_hash)
+
+            last_commit_hash = get_revisions(newrev)[-1]
+            log(f'Checking message of latest commit {last_commit_hash}...')
+            check_commit_message(last_commit_hash)
 
 
 def main():
