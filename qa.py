@@ -132,7 +132,12 @@ def check_push(lines):
         if refname.startswith('refs/heads/'):
             check_branch_name(refname)
 
-            last_commit_hash = get_revisions(newrev)[-1]
+            revisions = get_revisions(newrev)
+            if not revisions:
+                # Pushing new empty branch to origin.
+                continue
+
+            last_commit_hash = revisions[-1]
             log(f'Checking message of latest commit {last_commit_hash}...')
             check_commit_message(last_commit_hash)
 
