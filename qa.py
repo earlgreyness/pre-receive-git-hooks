@@ -97,20 +97,12 @@ def check_commit_message(commit_hash):
         check(line.rstrip() == line, RULE_8)
 
     subject_line = lines[0]
-    is_merge_commit = subject_line.startswith('Merge branch ') \
-        or subject_line.startswith('Merge commit ')
 
     check(subject_line, RULE_9)
 
-    if not is_merge_commit:
+    if not re.match(MERGE_COMMIT_SUBJECT_RE, subject_line):
         check(len(subject_line) <= 70, RULE_2)
         check(subject_line[-1].isalnum(), RULE_4)
-    else:
-        check(
-            re.match(MERGE_COMMIT_SUBJECT_RE, subject_line),
-            'Subject line for merge commits must match regex {!r}'
-            .format(MERGE_COMMIT_SUBJECT_RE)
-        )
 
     words = subject_line.split()
     check(words[0].isalpha() and words[0].capitalize() == words[0], RULE_3)
